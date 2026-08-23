@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.jai.MiniBlog.model.User;
 import com.jai.MiniBlog.repo.UserRepository;
+import com.jai.MiniBlog.util.JwtUtil;
 
 @Service
 public class UserService 
@@ -14,10 +15,12 @@ public class UserService
  
 	private UserRepository userRepo;
 	private PasswordEncoder passEnco;
-	public UserService(UserRepository userRepo, PasswordEncoder passEnco) {
+	private JwtUtil jwt;
+	public UserService(UserRepository userRepo, PasswordEncoder passEnco, JwtUtil jwt) {
 		super();
 		this.userRepo = userRepo;
 		this.passEnco = passEnco;
+		this.jwt = jwt;
 	}
 	
 	public User register(String userName , String emailId , String password) {
@@ -36,7 +39,7 @@ public class UserService
 		User excistingUser = user.get();
 		boolean match = passEnco.matches(password, excistingUser.getPassword());
 		if(match) {
-			return excistingUser.getUserName();
+			return jwt.generateToken(excistingUser.getUserId());
 		}else {
 			return null;
 		}
