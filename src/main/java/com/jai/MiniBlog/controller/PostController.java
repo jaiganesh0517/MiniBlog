@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,8 +36,13 @@ public class PostController {
 	}
     
     @GetMapping("/{id}")
-    public Optional<Post> viewSinglePost(@PathVariable("id") int id) {
-    	return postServ.viewPostById(id);
+    public ResponseEntity<Post> viewSinglePost(@PathVariable("id") int id) {
+        Optional<Post> post = postServ.viewPostById(id);
+        if(post.isPresent()) {
+        	return ResponseEntity.ok(post.get());
+        }
+    	
+    	return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
     
     @GetMapping("/me")
@@ -51,15 +58,23 @@ public class PostController {
     }
     
     @PutMapping("/{id}")
-    public Post editPost( @RequestBody Post post , @PathVariable("id") int id ,Authentication authentication ) {
+    public ResponseEntity<Post> editPost( @RequestBody Post post , @PathVariable("id") int id ,Authentication authentication ) {
     	int userId = (Integer)authentication.getPrincipal();
-    	return postServ.editPost(id, userId,post.getTitle(), post.getContent());
+    	Post result = postServ.editPost(id, userId,post.getTitle(), post.getContent());
+    	if(result == null) {
+    		return  ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    		}
+    	return ResponseEntity.ok(result);
     }
     
     @DeleteMapping("/{id}")
-    public Post deletePost(@PathVariable("id") int id,Authentication authentication) {
+    public ResponseEntity<Post> deletePost(@PathVariable("id") int id,Authentication authentication) {
     	int userId = (Integer)authentication.getPrincipal();
-    	return postServ.deletePost(id, userId);
+    	Post post = postServ.deletePost(id, userId);
+    	if(post == null) {
+    		return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    	}
+    	return ResponseEntity.ok(post);
     }
 
  }
