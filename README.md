@@ -22,6 +22,7 @@ This project was intentionally kept small in scope. The goal wasn't to build a f
 - **Spring Security** — authentication and authorization
 - **JWT (jjwt)** — stateless token-based authentication
 - **Maven** — dependency and build management
+- **Docker** / **Docker Compose** — containerized app and database
 
 ## Architecture
 
@@ -46,6 +47,8 @@ Controller  →  Service  →  Repository  →  Database
 
 **Stateless authentication.** JWTs carry the user's identity, verified via a custom `OncePerRequestFilter` on every request. No server-side session state.
 
+**App and database run as separate containers.** Rather than bundling everything into one container, the Spring Boot app and MySQL each run in their own container with a single responsibility, communicating over Docker's internal network by service name. Database connection values are injected via environment variables (with local defaults as fallbacks), so the same codebase runs unmodified whether it's started locally or via Docker.
+
 ## API Endpoints
 
 | Method | Endpoint       | Description                  | Auth Required |
@@ -63,12 +66,42 @@ For protected endpoints, include a header: `Authorization: Bearer <token>`
 
 ## Getting Started
 
-### Prerequisites
+There are two ways to run MiniBlog: with Docker (no local Java/MySQL setup needed), or manually against your own local environment.
+
+### Option A: Docker (recommended)
+
+**Prerequisites:** Docker and Docker Compose installed.
+
+1. Clone the repository
+   ```
+   git clone <your-repo-url>
+   cd MiniBlog
+   ```
+
+2. Build the application jar
+   ```
+   ./mvnw clean package
+   ```
+
+3. Start the app and a MySQL container together
+   ```
+   docker compose up --build
+   ```
+
+Docker Compose spins up two containers — the Spring Boot app and a MySQL 8.0 instance — connected over an internal Docker network. The app waits for MySQL to pass a health check before starting, and Hibernate creates the schema automatically on first run. No local MySQL installation or manual `application.properties` setup is required; the database connection is injected via environment variables defined in `docker-compose.yml`.
+
+The app will be available at `http://localhost:8080`.
+
+> Note: the MySQL credentials in `docker-compose.yml` only exist inside Docker's isolated network and are not reachable from outside it — they're intentionally separate from any real local database credentials.
+
+### Option B: Manual (local Java + MySQL)
+
+**Prerequisites:**
 - Java 17+ (or your configured JDK version)
 - Maven
 - MySQL running locally
 
-### Setup
+**Setup:**
 
 1. Clone the repository
    ```
